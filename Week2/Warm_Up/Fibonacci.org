@@ -1,0 +1,138 @@
+* Problem Statement
+  /Given an integer n, find nth Fibonacci number./
+  - *Input:* A single integer n.
+  - *Constraints:* 0 <= n <= 45
+  - *Output:* nth Fibonacci number.
+
+| *Input*     |                                                   |
+|-------------+---------------------------------------------------|
+| First Line  | /n/ - Given an integer n                          |
+
+
+| *Output*      | nth Fibonacci number                            |
+| *Constraints* | 0 <= n <= 45                                    |
+
+** Example Values
+
+| Input | Output        |
+|-------+---------------|
+|     0 |             0 |
+|     1 |             1 |
+|     2 |             1 |
+|    10 |            55 |
+|    19 |          4181 |
+|    45 |    1134903170 |
+
+| Limit  | Value     |
+|--------+-----------|
+| Time   | 5 seconds |
+| Memory | 512 Mb    |
+
+
+#+BEGIN_SRC python :session fibonacci :results none :noweb-ref constants
+from datetime import (
+    datetime,
+    timedelta,
+    )
+import random
+import numpy as np
+
+MAX_TIME = timedelta(seconds = 5)
+INPUTS = {
+    0: 0,
+    1: 1,
+    1: 2,
+    55: 10,
+    4181: 19,
+    1134903170:45
+}
+
+def check_inputs(implementation, inputs=INPUTS):
+    """Checks the inputs with the implementation
+
+    Args:
+        implementation: callable to check
+        inputs (dict): expected, input pairs
+        use_max (bool): if True use the max-range value (too slow for brute force)
+
+    Raises:
+        AssertionError: one of the outputs wasn't expected
+    """
+    for expected, input_values in inputs.items():
+        start = datetime.now()
+        actual = implementation(input_values)
+        assert actual == expected, "Inputs: {} Expected: {} Actual: {}".format(
+            input_values,
+            expected,
+            actual)
+        print("Elapsed Time: {}".format(datetime.now() - start))
+    return
+
+def fibonacci_number(n_elements):
+    if n_elements == 0:
+        return 0
+    elif n_elements == 1:
+        return 1
+    else:
+        array_init = np.zeros((n_elements+1),dtype=np.int64)
+        array_init[1] = 1
+        for i in range(2,n_elements+1):
+            array_init[i] = array_init[i-1] + array_init[i-2]
+        return array_init[-1]
+
+check_inputs(fibonacci_number)
+#+END_SRC
+
+
+* Stress Test
+  Even thought we're already passing, part of the assignment was to create a stress test to really exercise the algorithm once you have it passing.
+
+#+BEGIN_SRC python :session fibonacci :results none :noweb-ref stress-test
+def stress_test(implementation, tag,iterations=10):
+    """Repeatedly creates random inputs to test the implementation
+    
+    This compares the output of the implementation against my fibonacci_number version
+
+    Args:
+     implementation: callable to test
+     tag (str): something to identify the implementation
+     iterations (int): the number of times to test (if None runs infinitely)
+    """
+    true_count = 0
+    iteration = 0
+    increment = 1 if iterations is not None else 0
+    iterations = 1 if iterations is None else iterations
+    max_time = timedelta(0)
+    while iteration < iterations:
+        start = datetime.now()
+        true_count += 1
+        iteration += increment
+        print("***** ({}) Trial: {} *****".format(tag, true_count))
+        n = random.randrange(0, 46)
+        print("Running Brute Force")
+        brute_start = datetime.now()
+        output_brute = fibonacci_number(n)
+        print("Brute Force Time: {}".format(datetime.now() - brute_start))
+        print("Running {} implementation".format(tag))
+        implementation_start = datetime.now()
+        output_implementation = implementation(n)
+        implementation_end = datetime.now()
+        implementation_elapsed = implementation_end - implementation_start
+        if implementation_elapsed > MAX_TIME:
+            print("Error Time Exceeded: {}".format(implementation_elapsed))
+            break
+        print("Implementation Time: {}".format(implementation_elapsed))
+        if implementation_elapsed > max_time:
+            max_time = implementation_elapsed
+        if output_brute != output_implementation:
+            print("error: Expected {}, Actual {}", output_brute , output_implementation)
+            break
+        print("***** Input: {} --- Result: {} *****".format(n,output_brute))
+        print("Elapsed time: {}".format(datetime.now() - start))
+    print("Max {} time: {}".format(tag, max_time))
+    return
+
+print("\n\nSort method")
+stress_test(fibonacci_number, tag="Array", iterations=100)
+
+#+END_SRC
