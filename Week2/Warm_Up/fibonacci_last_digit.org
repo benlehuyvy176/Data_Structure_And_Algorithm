@@ -1,0 +1,128 @@
+* Problem Statement
+  /Given an integer 𝑛, find the last digit of the 𝑛th Fibonacci number 𝐹𝑛 (that is, 𝐹𝑛 mod 10)./
+  - *Input:* A single integer n.
+  - *Constraints:* 0 <= n <= 10**7
+  - *Output:* the last digit of the 𝑛th Fibonacci number.
+
+| *Input*     |                                                   |
+|-------------+---------------------------------------------------|
+| First Line  | /n/ - Given an integer n                          |
+
+
+| *Output*      | the last digit of the 𝑛th Fibonacci number      |
+| *Constraints* | 0 <= n <= 10**7                                 |
+
+** Example Values
+
+| Input | Output        |
+|-------+---------------|
+|     0 |             0 |
+|     1 |             1 |
+|     2 |             1 |
+|    10 |             5 |
+|    19 |             1 |
+|    45 |             0 |
+
+| Limit  | Value     |
+|--------+-----------|
+| Time   | 5 seconds |
+| Memory | 512 Mb    |
+
+#+BEGIN_SRC python :session fibonacci_last_digit :results none :noweb-ref constants
+from datetime import (
+    datetime,
+    timedelta,
+    )
+import random
+import numpy as np
+
+MAX_TIME = timedelta(seconds = 5)
+MAX_INPUTS = 10**7
+INPUTS = {
+    0:0,
+    1:1,
+    10:5,
+    19:1,
+    45:0
+}
+
+def check_inputs(implementation, inputs=INPUTS):
+    """Checks the inputs with the implementation
+
+    Args:
+        implementation: callable to check
+        inputs (dict): expected, input pairs
+
+    Raises:
+        AssertionError: one of the outputs wasn't expected
+    """
+    for input_values,expected in inputs.items():
+        start = datetime.now()
+        actual = implementation(input_values)
+        assert actual == expected, "Inputs: {} Expected: {} Actual: {}".format(
+            input_values,
+            expected,
+            actual)
+        print("Elapsed Time: {}".format(datetime.now() - start))
+    return
+
+def fibonacci_last_digit(n_elements):
+    if n_elements == 0:
+        return 0
+    elif n_elements == 1:
+        return 1
+    else:
+        array_init = np.zeros((n_elements+1),dtype=int)
+        array_init[1] = 1
+        # Only store that last digit
+        for i in range(2,n_elements+1):
+            array_init[i] = (array_init[i-1] + array_init[i-2])%10
+        return array_init[-1]
+
+check_inputs(fibonacci_last_digit)
+#+END_SRC
+
+* Stress Test
+
+#+BEGIN_SRC python :session fibonacci last digit :results none :noweb-ref stress-test
+def stress_test(implementation, tag,iterations=10):
+    """Repeatedly creates random inputs to test the implementation
+    
+    This compares the output of the implementation against my fibonacci_number version
+
+    Args:
+     implementation: callable to test
+     tag (str): something to identify the implementation
+     iterations (int): the number of times to test (if None runs infinitely)
+    """
+    true_count = 0
+    iteration = 0
+    increment = 1 if iterations is not None else 0
+    iterations = 1 if iterations is None else iterations
+    max_time = timedelta(0)
+    while iteration < iterations:
+        start = datetime.now()
+        true_count += 1
+        iteration += increment
+        print("***** ({}) Trial: {} *****".format(tag, true_count))
+        n = random.randrange(0, 10**7)
+        implementation_start = datetime.now()
+        output_implementation = implementation(n)
+        implementation_end = datetime.now()
+        implementation_elapsed = implementation_end - implementation_start
+        if implementation_elapsed > MAX_TIME:
+            print("Error Time Exceeded: {}".format(implementation_elapsed))
+            break
+        print("Implementation Time: {}".format(implementation_elapsed))
+        if implementation_elapsed > max_time:
+            max_time = implementation_elapsed
+        print("***** Input: {} --- Result: {} *****".format(n,output_implementation))
+        print("Elapsed time: {}".format(datetime.now() - start))
+    print("Max {} time: {}".format(tag, max_time))
+    return
+
+print("\n\nNormal method")
+stress_test(fibonacci_last_digit, tag="Normal", iterations=100)
+
+#+END_SRC
+
