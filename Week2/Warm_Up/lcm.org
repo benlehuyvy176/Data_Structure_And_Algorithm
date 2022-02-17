@@ -1,0 +1,155 @@
+* Problem Statement
+  /Given two integers 𝑎 and 𝑏, find their least common multiple./
+  - *Input:* The two integers 𝑎 and 𝑏 are given in the same line separated by space.
+  - *Constraints:* 1 <= a,b <= 10**7
+  - *Output:* Output the least common multiple of 𝑎 and 𝑏.
+
+| *Input*     |                                                   |
+|-------------+---------------------------------------------------|
+| First Line  | Given two integers 𝑎 and 𝑏                        |
+
+
+| *Output*      |least common multiple                            |
+| *Constraints* | 1 <= a,b <= 10**7                               |
+
+** Example Values
+
+| Input | Output        |
+|-------+---------------|
+|     0 |             0 |
+|     1 |             1 |
+|     2 |             1 |
+|    10 |            55 |
+|    19 |          4181 |
+|    45 |    1134903170 |
+
+| Limit  | Value     |
+|--------+-----------|
+| Time   | 5 seconds |
+| Memory | 512 Mb    |
+
+
+#+BEGIN_SRC python :session least common multiple :results none :noweb-ref constants
+from datetime import (
+    datetime,
+    timedelta,
+    )
+import random
+import numpy as np
+from numba import jit
+
+MAX_TIME = timedelta(seconds = 5)
+MAX_INPUTS = 10**7
+INPUTS = {
+    "357 234":27846,
+    "35 18":630,
+    "7 9":63,
+    "761457 614573":467970912861
+}
+
+def check_inputs(implementation, inputs=INPUTS):
+    """Checks the inputs with the implementation
+
+    Args:
+        implementation: callable to check
+        inputs (dict): expected, input pairs
+
+    Raises:
+        AssertionError: one of the outputs wasn't expected
+    """
+    for input_values,expected in inputs.items():
+        start = datetime.now()
+        input_values_format = [int(x) for x in input_values.split()]
+        actual = implementation(input_values_format)
+        assert actual == expected, "Inputs: {} Expected: {} Actual: {}".format(
+            input_values,
+            expected,
+            actual)
+        print("Elapsed Time: {}".format(datetime.now() - start))
+    return
+
+def greatest_common_divisor(two_numbers):
+    if two_numbers[0] > two_numbers[1]:
+        a = two_numbers[0]
+        b = two_numbers[1]
+    elif two_numbers[0] < two_numbers[1]:
+        b = two_numbers[0]
+        a = two_numbers[1]
+    else:
+        return two_numbers[0]
+    while (a % b)>0:
+        remainder = a % b
+        a = b
+        b = remainder
+    return b
+
+def least_common_multiple(two_numbers_1):
+    gcd_number = greatest_common_divisor(two_numbers_1)
+    if gcd_number == 1:
+        return two_numbers_1[0]*two_numbers_1[1]
+    if two_numbers_1[0] > two_numbers_1[1]:
+        great_number = int(two_numbers_1[0]/gcd_number)
+        return two_numbers_1[1]*great_number
+    elif two_numbers_1[0] < two_numbers_1[1]:
+        great_number = int(two_numbers_1[1]/gcd_number)
+        return two_numbers_1[0]*great_number
+    else:
+        return two_numbers_1[0]
+
+check_inputs(least_common_multiple)
+#+END_SRC
+
+
+* Stress Test
+
+#+BEGIN_SRC python :session least common multiple :results none :noweb-ref stress-test
+def stress_test(implementation, tag, maximum_value=MAX_INPUTS, iterations=10):
+    """Repeatedly creates random inputs to test the implementation
+    
+    This compares the output of the implementation against our brute-force version
+
+    Args:
+     implementation: callable to test
+     tag (str): something to identify the implementation
+     maximum_size (int): the maximum number of numbers for an input
+     maximum_value (int): the maximum value for any input
+     iterations (int): the number of times to test (if None runs infinitely)
+    """
+    true_count = 0
+    iteration = 0
+    increment = 1 if iterations is not None else 0
+    iterations = 1 if iterations is None else iterations
+    max_time = timedelta(0)
+    while iteration < iterations:
+        start = datetime.now()
+        true_count += 1
+        iteration += increment
+        print("***** ({}) Trial: {} *****".format(tag, true_count))
+        inputs = np.random.randint(maximum_value + 1, size=2)
+        print("Running Brute Force")
+        brute_start = datetime.now()
+        output_brute = least_common_multiple_jit(inputs)
+        print("Brute Force Time: {}".format(datetime.now() - brute_start))
+        print("Running {} implementation".format(tag))
+        implementation_start = datetime.now()
+        output_implementation = implementation(inputs)
+        implementation_end = datetime.now()
+        implementation_elapsed = implementation_end - implementation_start
+        if implementation_elapsed > MAX_TIME:
+            print("Error Time Exceeded: {}".format(implementation_elapsed))
+            break
+        print("Implementation Time: {}".format(implementation_elapsed))
+        if implementation_elapsed > max_time:
+            max_time = implementation_elapsed
+        if output_brute != output_implementation:
+            print("error: Expected {}, Actual {}", output_brute , output_implementation)
+            print("Inputs: {}".format(inputs))
+            break
+        print("Elapsed time: {}".format(datetime.now() - start))
+        print("***** Input: {} --- Result: {} *****".format(inputs,output_implementation))
+    print("Max {} time: {}".format(tag, max_time))
+    return
+
+stress_test(least_common_multiple,tag="Normal",iterations=100)
+
+#+END_SRC
